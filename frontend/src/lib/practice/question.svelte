@@ -13,6 +13,8 @@ SPDX-License-Identifier: MPL-2.0
 	import { flip } from 'svelte/animate';
 	import BrownButton from '$lib/components/buttons/brown.svelte';
 	import MediaComponent from '$lib/editor/MediaComponent.svelte';
+	import CodeBlock from '$lib/CodeBlock.svelte';
+	import { format_inline_code, split_question_title_and_code } from '$lib/helpers';
 
 	interface Props {
 		question: Question;
@@ -103,7 +105,17 @@ SPDX-License-Identifier: MPL-2.0
 	in:fly|global={{ x: 100 }}
 	out:fly|global={{ x: -100 }}
 >
-	<h1 class="text-3xl text-center">{@html question.question}</h1>
+	{#key question.question}
+		{@const parts = split_question_title_and_code(question.question)}
+		<h1 class="text-3xl text-center whitespace-pre-wrap">
+			{@html format_inline_code(parts.title)}
+		</h1>
+		{#if parts.code}
+			<div class="text-center mt-2">
+				<CodeBlock code={parts.code} />
+			</div>
+		{/if}
+	{/key}
 	{#if question.image !== null}
 		<div>
 			<MediaComponent
@@ -124,7 +136,7 @@ SPDX-License-Identifier: MPL-2.0
 						class:text-xl={i === selected_answer}
 						class:underline={i === selected_answer}
 						class="p-2 rounded-lg flex justify-center w-full transition my-5 text-black"
-						>{answer.answer}</button
+						>{@html format_inline_code(answer.answer)}</button
 					>
 				{/each}
 			</div>
@@ -138,7 +150,7 @@ SPDX-License-Identifier: MPL-2.0
 						onclick={() => {
 							selected_answer = i;
 							timer_res = '0';
-						}}>{answer.answer}</button
+						}}>{@html format_inline_code(answer.answer)}</button
 					>
 				{/each}
 				{#if timer_res === '0'}
@@ -205,7 +217,7 @@ SPDX-License-Identifier: MPL-2.0
 				onclick={() => {
 					selected_answer = i;
 					timer_res = '0';
-				}}>{answer.answer}</button
+				}}>{@html format_inline_code(answer.answer)}</button
 			>
 		{/each}
 		{#if timer_res === '0'}
@@ -281,7 +293,9 @@ SPDX-License-Identifier: MPL-2.0
 							/>
 						</svg>
 					</button>
-					<p class="w-full text-center p-2 text-2xl">{answer.answer}</p>
+					<p class="w-full text-center p-2 text-2xl">
+						{@html format_inline_code(answer.answer)}
+					</p>
 
 					<button
 						onclick={() => {
@@ -331,7 +345,7 @@ SPDX-License-Identifier: MPL-2.0
 						class:bg-green-500={question.answers[i].right}
 						class:bg-red-500={!question.answers[i].right}
 						class="p-2 rounded-lg flex justify-center w-full transition my-5 text-black"
-						>{answer.answer}</button
+						>{@html format_inline_code(answer.answer)}</button
 					>
 				{/each}
 			</div>
@@ -345,7 +359,7 @@ SPDX-License-Identifier: MPL-2.0
 						class:opacity-100={check_choice_selected[i]}
 						onclick={() => {
 							check_choice_selected[i] = !check_choice_selected[i];
-						}}>{answer.answer}</button
+						}}>{@html format_inline_code(answer.answer)}</button
 					>
 				{/each}
 				<BrownButton
@@ -367,3 +381,14 @@ SPDX-License-Identifier: MPL-2.0
 		{/if}
 	{/if}
 </div>
+
+<style>
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+			'Courier New', monospace;
+		background-color: rgba(0, 0, 0, 0.12);
+		padding: 0 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.95em;
+	}
+</style>

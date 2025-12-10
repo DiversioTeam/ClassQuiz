@@ -56,3 +56,59 @@ export const get_foreground_color = (bg_color: string): 'black' | 'white' => {
 	const white_contrast = getContrast(white_rgb, bg_rgb);
 	return black_contrast < white_contrast ? 'black' : 'white';
 };
+
+/**
+ * Convert backtick-delimited inline code segments to <code> elements.
+ *
+ * Example input:
+ *   "What does `len(x)` do?"
+ * becomes:
+ *   "What does <code class=\"cq-inline-code\">len(x)</code> do?"
+ *
+ * The CSS for `.cq-inline-code` lives in `app.css` so it can be reused
+ * across play, practice, and preview views.
+ */
+export const format_inline_code = (text: string | null | undefined): string => {
+	if (!text) return '';
+	// Quick check to avoid regex work when no backticks are present.
+	if (!text.includes('`')) return text;
+	return text.replace(/`([^`]+)`/g, '<code class="cq-inline-code">$1</code>');
+};
+
+/**
+ * Helper shape for splitting a quiz question into a short title and an
+ * optional code body. The frontend renders `title` as prose and `code`
+ * as a highlighted block underneath.
+ */
+export interface QuestionParts {
+	title: string;
+	code: string;
+}
+
+/**
+ * Split raw question text into `{ title, code }` by the first blank line.
+ *
+ * Expected input format:
+ *   Line 1..N   – Title / prose (can contain inline backticks).
+ *   Blank line  – Separator.
+ *   Remaining   – Code snippet (rendered as a block).
+ *
+ * If no blank line is present, the entire string is treated as the title.
+ */
+export const split_question_title_and_code = (raw: string | null | undefined): QuestionParts => {
+	const text = (raw ?? '').toString();
+	const lines = text.split('\n');
+	const blankIndex = lines.findIndex((l) => l.trim() === '');
+	if (blankIndex === -1) {
+		return { title: text.trim(), code: '' };
+	}
+	const title = lines
+		.slice(0, blankIndex)
+		.join(' ')
+		.trim();
+	const code = lines
+		.slice(blankIndex + 1)
+		.join('\n')
+		.trim();
+	return { title, code };
+};

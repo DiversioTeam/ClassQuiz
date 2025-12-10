@@ -104,7 +104,20 @@ storage: Storage = Storage(
 
 meilisearch = MeiliSearch.Client(settings().meilisearch_url)
 
-ALLOWED_TAGS_FOR_QUIZ = ["b", "strong", "i", "em", "small", "mark", "del", "sub", "sup"]
+ALLOWED_TAGS_FOR_QUIZ = [
+    "b",
+    "strong",
+    "i",
+    "em",
+    "small",
+    "mark",
+    "del",
+    "sub",
+    "sup",
+    "code",
+    "pre",
+    "br",
+]
 
 ALLOWED_MIME_TYPES = ["image/png", "video/mp4", "image/jpeg", "image/gif", "image/webp"]
 

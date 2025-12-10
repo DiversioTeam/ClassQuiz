@@ -19,7 +19,8 @@ SPDX-License-Identifier: MPL-2.0
 	import RatingComponent from '$lib/view_quiz/RatingComponent.svelte';
 	import { page } from '$app/state';
 	import ModComponent from './ModComponent.svelte';
-	import { get_foreground_color } from '$lib/helpers.ts';
+	import { get_foreground_color, format_inline_code, split_question_title_and_code } from '$lib/helpers.ts';
+	import CodeBlock from '$lib/CodeBlock.svelte';
 
 	const default_colors = ['#D6EDC9', '#B07156', '#7F7057', '#4E6E58'];
 
@@ -80,8 +81,8 @@ SPDX-License-Identifier: MPL-2.0
 	<title>ClassQuiz - View {quiz.title}</title>
 </svelte:head>
 
-<div>
-	<h1 class="text-4xl text-center">{@html quiz.title}</h1>
+	<div>
+		<h1 class="text-4xl text-center">{@html format_inline_code(quiz.title)}</h1>
 	<div class="text-center">
 		<p>{@html quiz.description}</p>
 	</div>
@@ -243,8 +244,19 @@ SPDX-License-Identifier: MPL-2.0
 			<CollapsSection headerText={question.question} expanded={auto_expand}>
 				<div class="grid grid-cols-1 gap-2 rounded-b-lg bg-white dark:bg-gray-700 -mt-1">
 					<h3 class="text-3xl m-1 text-center">
-						{index_question + 1}: {@html question.question}
+						{index_question + 1}:
 					</h3>
+					{#key question.question}
+						{@const parts = split_question_title_and_code(question.question)}
+						<div class="mx-4 my-2 text-left whitespace-pre-wrap text-center">
+							<p>{@html format_inline_code(parts.title)}</p>
+							{#if parts.code}
+								<div class="mt-2">
+									<CodeBlock code={parts.code} />
+								</div>
+							{/if}
+						</div>
+					{/key}
 					{#if question.image}
 						<span>
 							<MediaComponent
@@ -288,8 +300,9 @@ SPDX-License-Identifier: MPL-2.0
 										question.type !== QuizQuestionType.VOTING}
 								>
 									<h4 class="text-center">
-										{quiz.questions[index_question].answers[index_answer]
-											.answer}
+										{@html format_inline_code(
+											quiz.questions[index_question].answers[index_answer].answer
+										)}
 									</h4>
 								</div>
 							{/each}
@@ -305,7 +318,7 @@ SPDX-License-Identifier: MPL-2.0
 							{#each question.answers as answer}
 								<li class="p-1 rounded-lg py-3 dark:bg-gray-500 bg-gray-300">
 									<h4 class="text-center">
-										{answer.answer}
+										{@html format_inline_code(answer.answer)}
 									</h4>
 								</li>
 							{/each}
@@ -315,8 +328,9 @@ SPDX-License-Identifier: MPL-2.0
 							{#each question.answers as _, index_answer}
 								<div class="p-1 rounded-lg py-4 dark:bg-gray-500 bg-gray-300">
 									<h4 class="text-center">
-										{quiz.questions[index_question].answers[index_answer]
-											.answer}
+										{@html format_inline_code(
+											quiz.questions[index_question].answers[index_answer].answer
+										)}
 									</h4>
 								</div>
 							{/each}
@@ -341,3 +355,14 @@ SPDX-License-Identifier: MPL-2.0
 {/if}
 
 <DownloadQuiz bind:quiz_id={download_id} />
+
+<style>
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+			'Courier New', monospace;
+		background-color: rgba(0, 0, 0, 0.12);
+		padding: 0 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.95em;
+	}
+</style>

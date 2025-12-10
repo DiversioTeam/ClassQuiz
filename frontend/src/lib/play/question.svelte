@@ -14,8 +14,9 @@ SPDX-License-Identifier: MPL-2.0
 	import CircularTimer from '$lib/play/circular_progress.svelte';
 	import { flip } from 'svelte/animate';
 	import BrownButton from '$lib/components/buttons/brown.svelte';
-	import { get_foreground_color } from '../helpers';
+	import { get_foreground_color, format_inline_code, split_question_title_and_code } from '../helpers';
 	import MediaComponent from '$lib/editor/MediaComponent.svelte';
+	import CodeBlock from '$lib/CodeBlock.svelte';
 
 	const { t } = getLocalization();
 
@@ -129,18 +130,54 @@ SPDX-License-Identifier: MPL-2.0
 		}
 	});
 
+	// Split question into a prose title and optional code block.
+	const question_parts = $derived.by(() => split_question_title_and_code(question.question));
+
+	const render_answer_html = (text: string | null | undefined): string => {
+		if (text && text.includes('\n')) {
+			const safe = text ?? '';
+			return `<pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; text-align:left; margin: 0.25rem auto 0; font-size: 0.9rem; line-height: 1.35;">${safe}</pre>`;
+		}
+		return format_inline_code(text ?? '');
+	};
+
+	/**
+	 * Work out how much vertical space to give the question
+	 * header area (title + optional code block) in normal mode.
+	 * We want enough room that small snippets aren't hidden
+	 * behind the big answer tiles, without shrinking the tiles
+	 * too much for simple text-only questions.
+	 */
+	const get_question_section_height = (): string => {
+		if (game_mode !== 'normal') {
+			return '0';
+		}
+
+		const has_code = Boolean(question_parts.code);
+		const has_image = question.image !== null && question.image !== undefined;
+
+		if (has_image && has_code) {
+			// Rare, but give generous space when we have both.
+			return '55';
+		}
+		if (has_code || has_image) {
+			// Code-only or image-only questions get a taller header.
+			return '40';
+		}
+		// Short, text-only questions can live in a compact header.
+		return '25';
+	};
+
 	const get_div_height = (): string => {
 		if (game_mode === 'normal') {
-			if (question.image) {
-				return '66.666667';
-			} else {
-				return '83.333333';
-			}
+			const question_height = parseFloat(get_question_section_height());
+			const remaining = 100 - (Number.isNaN(question_height) ? 0 : question_height);
+			return remaining.toString();
 		} else {
 			return '100';
 		}
 	};
-	const default_colors = ['#D6EDC9', '#B07156', '#7F7057', '#4E6E58'];
+const default_colors = ['#D6EDC9', '#B07156', '#7F7057', '#4E6E58'];
 </script>
 
 <div class="h-screen w-screen">
@@ -148,13 +185,18 @@ SPDX-License-Identifier: MPL-2.0
 		<div
 			class="flex flex-col justify-start"
 			class:mt-10={[QuizQuestionType.RANGE, QuizQuestionType.ORDER, QuizQuestionType.TEXT]}
-			style="height: {question.image ? '33.333333' : '16.666667'}%"
+			style="height: {get_question_section_height()}%"
 		>
-			<h1
-				class="lg:text-2xl text-lg text-center text-black dark:text-white mt-2 break-normal mb-2"
-			>
-				{@html question.question}
-			</h1>
+			<div class="lg:text-2xl text-lg text-center text-black dark:text-white mt-2 mb-2">
+				<p>{@html format_inline_code(question_parts.title)}</p>
+				{#if question_parts.code}
+					<div class="mt-2">
+						<CodeBlock code={question_parts.code} />
+					</div>
+				{:else}
+					<!-- no extra code block -->
+				{/if}
+			</div>
 			{#if question.image !== null && game_mode !== 'kahoot'}
 				<div class="max-h-full">
 					<MediaComponent
@@ -192,7 +234,9 @@ SPDX-License-Identifier: MPL-2.0
 									src={kahoot_icons[i]}
 								/>
 							{:else}
-								<p class="m-auto">{answer.answer}</p>
+								<div class="m-auto text-center leading-snug break-normal whitespace-pre-wrap">
+									{@html render_answer_html(answer.answer)}
+								</div>
 							{/if}
 						</button>
 					{/each}
@@ -298,7 +342,9 @@ SPDX-License-Identifier: MPL-2.0
 								/>
 							</svg>
 						</button>
-						<p class="w-full text-center p-2 text-2xl">{answer.answer}</p>
+						<p class="w-full text-center p-2 text-2xl">
+							{@html format_inline_code(answer.answer)}
+						</p>
 
 						<button
 							onclick={() => {
@@ -364,3 +410,14 @@ SPDX-License-Identifier: MPL-2.0
 		{/if}
 	{/if}
 </div>
+
+<style>
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+			'Courier New', monospace;
+		background-color: rgba(0, 0, 0, 0.12);
+		padding: 0 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.95em;
+	}
+</style>

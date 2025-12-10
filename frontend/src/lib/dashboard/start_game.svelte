@@ -17,7 +17,7 @@ SPDX-License-Identifier: MPL-2.0
 	const { t } = getLocalization();
 	let { quiz_id = $bindable() } = $props();
 	let captcha_selected = $state(false);
-	let selected_game_mode = $state('kahoot');
+	let selected_game_mode = $state('normal');
 	let loading = $state(false);
 	let custom_field = $state('');
 	let cqcs_enabled = $state(false);
