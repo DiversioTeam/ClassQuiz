@@ -16,6 +16,7 @@ This file applies to everything under `scripts/` (including nested folders).
   - `scripts/validate_quiz_markdown.py`
   - `scripts/simulate_players.py`
   - `scripts/export_results_from_redis.py`
+  - `scripts/bootstrap_dev_test_users.py`
 - One‑off and migration scripts live under `scripts/sync/`:
   - `scripts/sync/sync_session1_quiz_append_new_questions.py`
   - `scripts/sync/sync_session1_tricky_timers.py`
@@ -32,4 +33,3 @@ This file applies to everything under `scripts/` (including nested folders).
   helpers loosely coupled so they do not break on upstream upgrades.
 - Do **not** add new `.py` files at the repo root – put them in `scripts/`
   (or `scripts/sync/` for one‑offs) instead.
-
