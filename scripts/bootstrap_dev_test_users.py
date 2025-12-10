@@ -22,7 +22,6 @@ from __future__ import annotations
 import os
 import sys
 from dataclasses import dataclass
-from typing import List
 
 import httpx
 
@@ -39,7 +38,7 @@ class DevUser:
 
 SHARED_PASSWORD = "DevPass123!"
 
-DEV_USERS: List[DevUser] = [
+DEV_USERS: list[DevUser] = [
     DevUser(username="Amal", email="amal.classquiz@gmail.com", password=SHARED_PASSWORD),
     DevUser(username="Ashish", email="ashish.classquiz@gmail.com", password=SHARED_PASSWORD),
     DevUser(username="Monty", email="monty.classquiz@gmail.com", password=SHARED_PASSWORD),
@@ -101,4 +100,3 @@ def main() -> int:
 
 if __name__ == "__main__":  # pragma: no cover - CLI entrypoint
     raise SystemExit(main())
-

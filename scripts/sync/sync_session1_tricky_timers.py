@@ -22,7 +22,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -40,7 +40,7 @@ from sync_session1_quiz_append_new_questions import (  # type: ignore
 TRICKY_TIME_SECONDS = 75
 
 
-def mark_tricky_questions(quiz: Dict[str, Any]) -> bool:
+def mark_tricky_questions(quiz: dict[str, Any]) -> bool:
     """
     Set the `time` field of the hard/container questions to TRICKY_TIME_SECONDS.
 
@@ -48,8 +48,8 @@ def mark_tricky_questions(quiz: Dict[str, Any]) -> bool:
     Returns True if any question was modified.
     """
 
-    markers: List[str] = [d["marker"] for d in build_new_question_definitions()]
-    questions: List[Dict[str, Any]] = quiz.get("questions", [])
+    markers: list[str] = [d["marker"] for d in build_new_question_definitions()]
+    questions: list[dict[str, Any]] = quiz.get("questions", [])
     total = len(questions)
     # In the current design the hard questions are appended at the
     # end of the quiz. Use this as a secondary signal so that even
@@ -73,7 +73,7 @@ def mark_tricky_questions(quiz: Dict[str, Any]) -> bool:
     return changed
 
 
-def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: Dict[str, Any]) -> None:
+def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: dict[str, Any]) -> None:
     """Send the updated quiz back via the editor API."""
 
     quiz_input = {

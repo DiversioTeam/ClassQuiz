@@ -27,13 +27,10 @@ import argparse
 import json
 import subprocess
 import sys
-from typing import Dict, List, Tuple
-
-
 DOCKER_COMPOSE_CMD = ("docker", "compose")
 
 
-def _run_redis_command(args: List[str]) -> str:
+def _run_redis_command(args: list[str]) -> str:
     """
     Execute a redis-cli command inside the redis container
     via `docker compose exec`.
@@ -52,8 +49,8 @@ def _run_redis_command(args: List[str]) -> str:
         msg = proc.stderr.strip() or proc.stdout.strip()
         raise RuntimeError(f"redis-cli {' '.join(args)} failed: {msg}")
 
-    def _filter(lines: str) -> List[str]:
-        out: List[str] = []
+    def _filter(lines: str) -> list[str]:
+        out: list[str] = []
         for line in lines.splitlines():
             line = line.strip()
             if not line:
@@ -82,7 +79,7 @@ def redis_get(key: str) -> str:
     return out.splitlines()[-1]
 
 
-def redis_hgetall(key: str) -> Dict[str, str]:
+def redis_hgetall(key: str) -> dict[str, str]:
     """
     HGETALL a hash key and return it as a dict of strings.
 
@@ -112,7 +109,7 @@ def redis_hgetall(key: str) -> Dict[str, str]:
     return result
 
 
-def load_game(pin: str) -> Dict:
+def load_game(pin: str) -> dict:
     """Load the PlayGame JSON for a given game PIN."""
 
     raw = redis_get(f"game:{pin}")
@@ -124,14 +121,14 @@ def load_game(pin: str) -> Dict:
         raise SystemExit(f"Could not decode game:{pin} JSON: {exc}") from exc
 
 
-def collect_player_stats(pin: str, num_questions: int) -> Dict[str, Dict[str, int]]:
+def collect_player_stats(pin: str, num_questions: int) -> dict[str, dict[str, int]]:
     """
     Scan per-question answer data and build a mapping:
 
         {player: {"answered": N, "right": M}}
     """
 
-    stats: Dict[str, Dict[str, int]] = {}
+    stats: dict[str, dict[str, int]] = {}
     for index in range(num_questions):
         raw = redis_get(f"game_session:{pin}:{index}")
         if not raw:
@@ -157,7 +154,7 @@ def collect_player_stats(pin: str, num_questions: int) -> Dict[str, Dict[str, in
 
 
 def format_table(
-    game: Dict, scores: Dict[str, str], per_player: Dict[str, Dict[str, int]]
+    game: dict, scores: dict[str, str], per_player: dict[str, dict[str, int]]
 ) -> str:
     """Return a human-readable scoreboard table."""
 
@@ -165,7 +162,7 @@ def format_table(
     title = game.get("title", "<unknown quiz>")
     num_questions = len(game.get("questions") or [])
 
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append(
         f"Game PIN {pin} – {title} ({num_questions} question{'s' if num_questions != 1 else ''})"
     )
@@ -209,7 +206,7 @@ def format_table(
     return "\n".join(lines)
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Export final standings for a live game directly from Redis.\n"
@@ -250,4 +247,3 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover - CLI entrypoint
     raise SystemExit(main())
-

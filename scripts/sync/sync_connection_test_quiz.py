@@ -33,7 +33,7 @@ import argparse
 import os
 import sys
 import textwrap
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -50,7 +50,7 @@ def _clean_question(text: str) -> str:
     return textwrap.dedent(text).strip("\n")
 
 
-def build_updated_question_texts() -> Dict[int, str]:
+def build_updated_question_texts() -> dict[int, str]:
     """
     Return the desired question text for each index (0-based)
     in the Connection Test Quiz.
@@ -160,14 +160,14 @@ def find_quiz_id(client: httpx.Client, title: str) -> str | None:
     return matches[0]["id"]
 
 
-def apply_question_text_updates(quiz: Dict[str, Any]) -> bool:
+def apply_question_text_updates(quiz: dict[str, Any]) -> bool:
     """
     Update the question text for the Connection Test Quiz in-place.
 
     Returns True if any question text was changed.
     """
 
-    questions: List[Dict[str, Any]] = quiz.get("questions", [])
+    questions: list[dict[str, Any]] = quiz.get("questions", [])
     desired_texts = build_updated_question_texts()
 
     changed = False
@@ -189,7 +189,7 @@ def apply_question_text_updates(quiz: Dict[str, Any]) -> bool:
     return changed
 
 
-def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: Dict[str, Any]) -> None:
+def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: dict[str, Any]) -> None:
     """Send the updated quiz back via the editor API."""
 
     quiz_input = {
@@ -214,7 +214,7 @@ def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: Dict[str, Any]) -
     print(f"Quiz {quiz_id} updated successfully.")
 
 
-def build_connection_test_quiz_payload() -> Dict[str, Any]:
+def build_connection_test_quiz_payload() -> dict[str, Any]:
     """
     Build a minimal quiz definition for the Connection Test Quiz.
 
@@ -222,7 +222,7 @@ def build_connection_test_quiz_payload() -> Dict[str, Any]:
     seven short questions to verify connectivity and formatting.
     """
 
-    def q(question: str, time: int, answers: list[tuple[str, bool]]) -> Dict[str, Any]:
+    def q(question: str, time: int, answers: list[tuple[str, bool]]) -> dict[str, Any]:
         return {
             "question": _clean_question(question),
             "time": str(time),
@@ -232,7 +232,7 @@ def build_connection_test_quiz_payload() -> Dict[str, Any]:
             "hide_results": False,
         }
 
-    questions: List[Dict[str, Any]] = [
+    questions: list[dict[str, Any]] = [
         q(
             """
             Given this function, what does `sum_positive([-1, 1, 2])` print?

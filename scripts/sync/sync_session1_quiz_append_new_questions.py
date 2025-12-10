@@ -21,7 +21,7 @@ import argparse
 import os
 import sys
 import textwrap
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -32,7 +32,7 @@ DEFAULT_PASSWORD = "DevPass123!"
 DEFAULT_QUIZ_TITLE = "Python Data Model – Session 1 Quiz"
 
 
-def build_new_question_definitions() -> List[Dict[str, Any]]:
+def build_new_question_definitions() -> list[dict[str, Any]]:
     """Return metadata for the new questions to append."""
 
     return [
@@ -257,12 +257,12 @@ def build_new_question_definitions() -> List[Dict[str, Any]]:
     ]
 
 
-def build_question_payload(defn: Dict[str, Any]) -> Dict[str, Any]:
+def build_question_payload(defn: dict[str, Any]) -> dict[str, Any]:
     """Convert an internal question definition into a QuizQuestion payload."""
 
     question_text = textwrap.dedent(defn["question"]).strip("\n")
 
-    answers_payload: List[Dict[str, Any]] = []
+    answers_payload: list[dict[str, Any]] = []
     for index, answer_text in enumerate(defn["answers"]):
         answers_payload.append(
             {
@@ -323,14 +323,14 @@ def find_quiz_id(client: httpx.Client, title: str) -> str:
     return matches[0]["id"]
 
 
-def append_new_questions_if_missing(quiz: Dict[str, Any]) -> bool:
+def append_new_questions_if_missing(quiz: dict[str, Any]) -> bool:
     """
     Append new questions to quiz['questions'] if they are not present yet.
 
     Returns True if any questions were added.
     """
 
-    questions: List[Dict[str, Any]] = quiz.get("questions", [])
+    questions: list[dict[str, Any]] = quiz.get("questions", [])
     existing_texts = [q.get("question", "") for q in questions]
 
     new_definitions = build_new_question_definitions()
