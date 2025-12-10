@@ -7,11 +7,19 @@ This file documents what has been done in this fork of **ClassQuiz**, the quirks
 ## 1. High‑level goals
 
 - Run **Python training sessions** using ClassQuiz as the quiz engine.
-- Keep everything reproducible via **Docker** on macOS.
+- Keep everything reproducible via **Docker** on macOS (or Linux/Windows with Docker Desktop).
 - Generate quizzes **on the fly** from teaching material and archive them as Markdown for discussion.
 - Keep a small set of **test accounts** for demos and internal experiments.
 
-All work described below was done under `/Users/monty/work/diversio/ClassQuiz` with Docker Desktop on macOS.
+All work described below assumes you have cloned this repo (or the Diversio fork)
+into some local directory and are running Docker Desktop.
+
+Example:
+
+```bash
+git clone git@github.com:DiversioTeam/ClassQuiz.git
+cd ClassQuiz
+```
 
 ---
 
@@ -204,12 +212,13 @@ These files are the **source of truth** for the Session 1 quiz content; the API�
 
 ## 6. Running and closing the system
 
-### 6.1 Starting the system (Docker)
+### 6.1 First‑time setup (Docker)
 
-From the repo root:
+From a fresh clone:
 
 ```bash
-cd /Users/monty/work/diversio/ClassQuiz
+git clone git@github.com:DiversioTeam/ClassQuiz.git
+cd ClassQuiz
 docker compose up -d
 ```
 
@@ -229,15 +238,30 @@ docker compose ps
 
 You should see `proxy` bound to `0.0.0.0:8000->8080` and all services “Up”.
 
-Verify API:
+Once the containers are up, verify the API:
 
 ```bash
 curl http://localhost:8000/openapi.json | head
 ```
 
-Verify frontend:
+Then verify the frontend:
 
 - Visit `http://localhost:8000` in a browser.
+
+Finally, bootstrap the shared dev/test users so you can log in with the
+same accounts described in §3:
+
+```bash
+python scripts/bootstrap_dev_test_users.py
+```
+
+By default this script talks to `http://localhost:8000`. If you are using a
+different base URL (for example via ngrok), set `CLASSQUIZ_BASE_URL`:
+
+```bash
+CLASSQUIZ_BASE_URL=https://your-host.example.com \
+  python scripts/bootstrap_dev_test_users.py
+```
 
 ### 6.2 Stopping the system
 
@@ -511,4 +535,3 @@ To keep the repo tidy as more people add quizzes and helpers:
     - `sessionN_quiz_answer_key.md`
     - Optional extras such as `sessionN_survey.md`, `sessionN_survey_answer_key.md`.
   - When documenting new quizzes in this file, reference the full `quiz_data/...` paths so it is obvious where the canonical Markdown lives.
-
