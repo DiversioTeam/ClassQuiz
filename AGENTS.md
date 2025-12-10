@@ -466,6 +466,11 @@ When designing a new technical quiz (e.g. `session2_quiz.md`):
     - One or two very short concept questions.
     - Several full code‑block questions with backticked outputs.
   - Good model for “warm‑up” quizzes that still demonstrate formatting.
+  - To ensure this quiz exists and is normalized on a fresh database, run:
+
+    ```bash
+    python scripts/sync/sync_connection_test_quiz.py
+    ```
 
 - **Python Data Model – Session 1 Quiz**
   - Now uses:
