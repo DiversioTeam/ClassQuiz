@@ -139,8 +139,11 @@ def login_and_get_token(client: httpx.Client, email: str, password: str) -> str:
     return token
 
 
-def find_quiz_id(client: httpx.Client, title: str) -> str:
-    """Find the quiz id for the given title for the current user."""
+def find_quiz_id(client: httpx.Client, title: str) -> str | None:
+    """Find the quiz id for the given title for the current user.
+
+    Returns the quiz ID or ``None`` if no matching quiz exists.
+    """
 
     resp = client.get("/quiz/list", params={"page_size": 100, "page": 1})
     resp.raise_for_status()
@@ -148,7 +151,7 @@ def find_quiz_id(client: httpx.Client, title: str) -> str:
 
     matches = [quiz for quiz in quizzes if quiz.get("title") == title]
     if not matches:
-        raise RuntimeError(f"Quiz with title {title!r} not found in /quiz/list.")
+        return None
     if len(matches) > 1:
         raise RuntimeError(
             f"Multiple quizzes with title {title!r} found; "
@@ -211,6 +214,176 @@ def push_quiz_update(client: httpx.Client, quiz_id: str, quiz: Dict[str, Any]) -
     print(f"Quiz {quiz_id} updated successfully.")
 
 
+def build_connection_test_quiz_payload() -> Dict[str, Any]:
+    """
+    Build a minimal quiz definition for the Connection Test Quiz.
+
+    This mirrors the structure we currently use in our internal instance:
+    seven short questions to verify connectivity and formatting.
+    """
+
+    def q(question: str, time: int, answers: list[tuple[str, bool]]) -> Dict[str, Any]:
+        return {
+            "question": _clean_question(question),
+            "time": str(time),
+            "type": "ABCD",
+            "answers": [{"right": is_right, "answer": text, "color": None} for text, is_right in answers],
+            "image": None,
+            "hide_results": False,
+        }
+
+    questions: List[Dict[str, Any]] = [
+        q(
+            """
+            Given this function, what does `sum_positive([-1, 1, 2])` print?
+
+            def sum_positive(nums):
+                total = 0
+                for n in nums:
+                    if n > 0:
+                        total += n
+                return total
+
+            print(sum_positive([-1, 1, 2]))
+            """,
+            30,
+            [
+                ("`3`", True),
+                ("`2`", False),
+                ("`6`", False),
+                ("`It raises a TypeError`", False),
+            ],
+        ),
+        q(
+            "Quick sanity check: what is `1 + 1`?",
+            30,
+            [
+                ("`1`", False),
+                ("`2`", True),
+                ("`3`", False),
+                ("`4`", False),
+            ],
+        ),
+        q(
+            "Which of these is a day of the week?",
+            30,
+            [
+                ("`Blue`", False),
+                ("`Circle`", False),
+                ("`Wednesday`", True),
+                ("`Triangle`", False),
+            ],
+        ),
+        q(
+            "Read the sentence and answer: <b>All participants will complete a short survey after the quiz.</b> Which statement is true?",
+            45,
+            [
+                ("Only some participants will complete a survey.", False),
+                ("No surveys will be used.", False),
+                ("Every participant is expected to complete a survey.", True),
+                ("The survey happens before the quiz.", False),
+            ],
+        ),
+        q(
+            """
+            What does this loop print?
+
+            total = 0
+            for i in range(3):
+                total += i
+            print(total)
+            """,
+            30,
+            [
+                ("`3`", True),
+                ("`2`", False),
+                ("`6`", False),
+                ("`It raises an error`", False),
+            ],
+        ),
+        q(
+            """
+            For this code, what gets printed?
+
+            values = [1, 2, 3]
+            for v in values:
+                if v % 2 == 0:
+                    print(v)
+            """,
+            30,
+            [
+                ("`1`", False),
+                ("`2`", True),
+                ("`3`", False),
+                ("`1 3`", False),
+            ],
+        ),
+        q(
+            """
+            What does this program print?
+
+            x = 1
+
+            def f():
+                x = 2
+                print(x)
+
+            f()
+            print(x)
+            """,
+            30,
+            [
+                ("`2 then 1`", True),
+                ("`1 then 2`", False),
+                ("`2 then 2`", False),
+                ("`1 then 1`", False),
+            ],
+        ),
+    ]
+
+    return {
+        "public": False,
+        "title": DEFAULT_QUIZ_TITLE,
+        "description": "Short warm-up quiz to verify connectivity and formatting.",
+        "cover_image": None,
+        "background_color": None,
+        "background_image": None,
+        "questions": questions,
+    }
+
+
+def create_quiz_if_missing(client: httpx.Client, title: str) -> str:
+    """
+    Ensure the Connection Test Quiz exists for the current user.
+
+    Returns the quiz ID (existing or newly created).
+    """
+
+    existing_id = find_quiz_id(client, title)
+    if existing_id is not None:
+        print(f"Found existing quiz {title!r} with id {existing_id}")
+        return existing_id
+
+    print(f"No quiz named {title!r} found; creating a new one.")
+    quiz_input = build_connection_test_quiz_payload()
+
+    start_resp = client.post(
+        "/editor/start",
+        params={"edit": "false"},
+    )
+    start_resp.raise_for_status()
+    edit_id = start_resp.json()["token"]
+
+    finish_resp = client.post("/editor/finish", params={"edit_id": edit_id}, json=quiz_input)
+    finish_resp.raise_for_status()
+    data = finish_resp.json()
+    quiz_id = data.get("id") or data.get("quiz_id")
+    if not quiz_id:
+        raise RuntimeError("Editor API did not return a quiz id after creation.")
+    print(f"Created Connection Test Quiz with id {quiz_id}")
+    return quiz_id
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Normalize code formatting for the Connection Test Quiz via the editor API.",
@@ -248,7 +421,7 @@ def main() -> None:
             token = login_and_get_token(client, args.email, args.password)
             client.headers["Authorization"] = f"Bearer {token}"
 
-            quiz_id = args.quiz_id or find_quiz_id(client, args.quiz_title)
+            quiz_id = args.quiz_id or create_quiz_if_missing(client, args.quiz_title)
             get_resp = client.get(f"/quiz/get/{quiz_id}")
             get_resp.raise_for_status()
             quiz = get_resp.json()
