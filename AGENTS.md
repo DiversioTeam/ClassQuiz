@@ -263,7 +263,47 @@ CLASSQUIZ_BASE_URL=https://your-host.example.com \
   python scripts/bootstrap_dev_test_users.py
 ```
 
-### 6.2 Stopping the system
+### 6.2 Sharing a local session via ngrok (optional)
+
+For remote participants (e.g. people not on your local network), you can
+expose the Caddy proxy (`localhost:8000`) using a tunnel provider such as
+ngrok.
+
+1. Install and sign in to ngrok (see ngrok docs for your OS).
+2. From the repo root, with Docker running, start a tunnel:
+
+   ```bash
+   ngrok http 8000
+   ```
+
+   or, if you have configured a reserved domain:
+
+   ```bash
+   ngrok http --domain=<your-subdomain>.ngrok-free.app 8000
+   ```
+
+3. Ngrok will print a public HTTPS URL, e.g.
+
+   ```text
+   Forwarding  https://camel-good-lovely.ngrok-free.app -> http://localhost:8000
+   ```
+
+4. Share this HTTPS URL with participants. They can then:
+   - Open the dashboard at `https://<your-ngrok-host>/`.
+   - Join games at `https://<your-ngrok-host>/play`.
+
+5. When running helper scripts that talk to the API, point them at the same
+   host by setting `CLASSQUIZ_BASE_URL`, for example:
+
+   ```bash
+   CLASSQUIZ_BASE_URL=https://camel-good-lovely.ngrok-free.app \
+     python scripts/export_results_from_redis.py 913862
+   ```
+
+As long as the tunnel is active and Docker is running, others can join your
+locally hosted quiz through the ngrok URL.
+
+### 6.3 Stopping the system
 
 To stop containers but keep volumes (DB, etc.):
 
