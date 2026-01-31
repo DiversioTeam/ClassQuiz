@@ -62,7 +62,7 @@ export const dataSchema = yup.object({
 		.array()
 		.of(
 			yup.object({
-				question: yup.string().required('A question-title is required').max(299),
+				question: yup.string().required('A question-title is required').max(1000),
 				time: yup.number().required().positive('The time has to be positive'),
 				image: yup.string().nullable().lowercase(),
 				answers: yup.lazy((v) => {
